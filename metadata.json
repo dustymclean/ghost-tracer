@@ -1,0 +1,5 @@
+{
+  "name": "Copy of GhostTrace OSINT Analyzer",
+  "description": "An advanced intelligence tool that aggregates public data to generate deep-dive OSINT reports, visualize connections, and facilitate conversational analysis of entities.",
+  "requestFramePermissions": []
+}

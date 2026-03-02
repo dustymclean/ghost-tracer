@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Core Sovereign Aesthetic */
+body {
+  background-color: #050508;
+  color: #e0e0e0;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom Cyber-Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0f; 
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a40; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff; 
+}
+
+/* Forensic Print Branding */
+@media print {
+  /* Ensure logo and header only show on paper */
+  .print-only {
+    display: block !important;
+  }
+  
+  /* Optimize for Physical Dossiers */
+  body {
+    background: white !important;
+    color: black !important;
+    font-family: 'Courier New', Courier, monospace !important;
+  }
+
+  /* Remove UI noise from paper reports */
+  nav, button, .no-print, .osint-accent, .absolute {
+    display: none !important;
+  }
+
+  /* Force borders and text to be visible/ink-friendly */
+  .border-osint-700 {
+    border-color: #000 !important;
+  }
+  
+  .bg-osint-800\/50, .bg-osint-900 {
+    background: transparent !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
