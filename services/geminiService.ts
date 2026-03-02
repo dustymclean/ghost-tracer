@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { OsintReport } from '../types';
+import { OsintReport, EntityType } from '../types';
 
 const extractAndParseJson = (text: string): any => {
   let clean = text.trim();
@@ -12,23 +12,30 @@ const extractAndParseJson = (text: string): any => {
 };
 
 export const generateOsintReport = async (query: string, apiKey: string): Promise<OsintReport> => {
+  // Using the official SDK to handle versioning and headers automatically
   const genAI = new GoogleGenerativeAI(apiKey);
   
-  // Reverting to the elite Flash 2.0 engine with the original system instruction
+  // 'gemini-2.0-flash' is the stable production alias for the experimental model
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-exp",
+    model: "gemini-2.0-flash",
     systemInstruction: "You are GhostTrace, elite OSINT analyst. Return a detailed JSON report. Ensure the JSON includes targetName, entityType, summary, confidenceScore, keyStats, timeline, connections, riskFactors, digitalFootprint, and sources."
   });
 
   const result = await model.generateContent(`Deep OSINT trace on: "${query}".`);
   const responseText = result.response.text();
-  
-  return extractAndParseJson(responseText) as OsintReport;
+  const parsed = extractAndParseJson(responseText);
+
+  // Manual Enum Mapping to prevent UI crashes in ReportView
+  if (parsed.entityType === 'Company') parsed.entityType = EntityType.COMPANY;
+  else if (parsed.entityType === 'Individual') parsed.entityType = EntityType.INDIVIDUAL;
+  else parsed.entityType = EntityType.UNKNOWN;
+
+  return parsed as OsintReport;
 };
 
 export const chatWithOsintContext = async (message: string, report: any, apiKey: string) => {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
   const chat = model.startChat({
     history: [
       { role: "user", parts: [{ text: `CONTEXT: ${JSON.stringify(report)}` }] },
