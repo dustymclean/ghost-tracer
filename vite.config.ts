@@ -4,8 +4,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/ghost-tracer/', 
   plugins: [react()],
-  define: {
-    // This allows the env variables to be replaced during build
-    'process.env': {}
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    // Ensures environment variables are handled correctly in production
+    minify: 'esbuild'
   }
 })

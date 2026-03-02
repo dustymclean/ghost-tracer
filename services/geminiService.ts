@@ -1,30 +1,39 @@
 import { OsintReport } from '../types';
 
-export const generateOsintReport = async (query: string): Promise<OsintReport> => {
-  // We pull the key from Vite's environment variables
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+export const generateOsintReport = async (query: string, apiKey: string): Promise<OsintReport> => {
+  if (!apiKey) throw new Error("Node Offline: No valid API Key detected.");
 
-  if (!apiKey) {
-    throw new Error("Sovereign Node Error: Gemini API Key not found in environment.");
-  }
+  const systemPrompt = `You are a forensic investigator. Generate a detailed OSINT controversy report for ${query}. 
+  Return ONLY a raw JSON object. Do not use markdown formatting.
+  Structure:
+  {
+    "companyName": "${query}",
+    "entityType": "Corporation",
+    "riskScore": 0,
+    "summary": "Summary text",
+    "controversies": [{"title": "Exposed", "severity": "High", "year": "2024", "description": "Details"}]
+  }`;
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+  // The 'gemini-1.5-flash-latest' alias is the most stable path for cross-environment deployments
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: [{ text: `Generate a detailed OSINT controversy report for ${query}. Return ONLY valid JSON matching the OsintReport interface.` }] }]
+      contents: [{ parts: [{ text: systemPrompt }] }]
     })
   });
 
-  if (!response.ok) throw new Error("Intelligence Retrieval Failed.");
-  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || "Uplink to Intelligence Node Failed.");
+  }
+
   const result = await response.json();
-  // Simplified parsing for stability
-  return {
-    companyName: query,
-    entityType: "Corporation",
-    riskScore: 75,
-    summary: result.candidates[0].content.parts[0].text,
-    controversies: []
-  } as OsintReport;
+  const text = result.candidates[0].content.parts[0].text;
+  
+  // Clean potential AI chatter to ensure valid JSON
+  const cleanJson = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(cleanJson) as OsintReport;
 };
