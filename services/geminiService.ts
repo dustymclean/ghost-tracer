@@ -1,31 +1,25 @@
-import { OsintReport } from '../types';
+import { OsintReport, EntityType } from '../types';
 
 export const generateOsintReport = async (query: string, apiKey: string): Promise<OsintReport> => {
   if (!apiKey) throw new Error("Credentials Missing: Initialize Node in Settings.");
 
-  // This is the prompt structure that previously achieved 100% Symmetery
-  const systemPrompt = `You are a forensic investigator. 
-  Generate a detailed OSINT controversy report for ${query}. 
-  You MUST return ONLY a raw JSON object. Do not include any text before or after the JSON.
-  Match this structure exactly:
+  const systemPrompt = `You are a forensic investigator. Generate a detailed OSINT report for ${query}.
+  Return ONLY a raw JSON object matching this structure:
   {
-    "companyName": "${query}",
-    "entityType": "Corporation",
-    "riskScore": 75,
-    "summary": "Brief analysis of corporate footprint.",
-    "controversies": [
-      {
-        "title": "Data Breach / Labor Issue / Environmental Impact",
-        "severity": "High",
-        "year": "2024",
-        "description": "Specific details of the event."
-      }
-    ]
+    "targetName": "${query}",
+    "entityType": "Company",
+    "summary": "Full summary here",
+    "confidenceScore": 85,
+    "keyStats": [{"label": "Status", "value": "Active", "trend": "neutral"}],
+    "timeline": [{"date": "2024", "event": "Analysis initiated"}],
+    "connections": [{"name": "Parent Corp", "roleOrRelation": "Subsidiary", "strength": 8}],
+    "riskFactors": ["Data Privacy", "Supply Chain"],
+    "digitalFootprint": ["Web Presence", "Social Registry"],
+    "sources": ["https://google.com"]
   }`;
 
   try {
-    // Restoring to the specific endpoint that was previously operational
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -40,12 +34,9 @@ export const generateOsintReport = async (query: string, apiKey: string): Promis
 
     const result = await response.json();
     const rawText = result.candidates[0].content.parts[0].text;
-    
-    // Rigorous cleaning to prevent parsing crashes
     const cleanJson = rawText.replace(/```json|```/g, "").trim();
     return JSON.parse(cleanJson) as OsintReport;
   } catch (err: any) {
-    console.error("Node Retrieval Error:", err);
     throw new Error(`Audit Interrupted: ${err.message}`);
   }
 };
